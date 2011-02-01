@@ -71,7 +71,7 @@ const unsigned long int_volt_max = 1250000;
 
 static struct s5pv210_dvs_conf dvs_conf[] = {
 	[L0] = {
-		.arm_volt   = 1300000,
+		.arm_volt   = 1325000,
 		.int_volt   = 1100000,
 	},
 	[L1] = {
@@ -286,13 +286,12 @@ static void s5pv210_cpufreq_clksrcs_MPLL2APLL(unsigned int index,
 	 * 2. Turn on APLL
 	 * 2-1. Set PMS values
 	 */
-	if (index == L0)
-		/* APLL FOUT becomes 1000 Mhz */
-//		__raw_writel(PLL45XX_APLL_VAL_1000, S5P_APLL_CON);
-		__raw_writel(PLL45XX_APLL_VAL_1200, S5P_APLL_CON);
-	else
-		/* APLL FOUT becomes 800 Mhz */
-		__raw_writel(PLL45XX_APLL_VAL_800, S5P_APLL_CON);
+	if (index == L0) /* APLL FOUT becomes 1200 Mhz */
+	      __raw_writel(PLL45XX_APLL_VAL_1200, S5P_APLL_CON);
+	else if(index == L1) /* APLL FOUT becomes 1000 Mhz */
+               __raw_writel(PLL45XX_APLL_VAL_1000, S5P_APLL_CON);
+        else /* APLL FOUT becomes 800 Mhz */ 
+	      __raw_writel(PLL45XX_APLL_VAL_800, S5P_APLL_CON);
 	/* 2-2. Wait until the PLL is locked */
 	do {
 		reg = __raw_readl(S5P_APLL_CON);
