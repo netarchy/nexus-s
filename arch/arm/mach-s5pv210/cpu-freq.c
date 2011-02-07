@@ -699,7 +699,7 @@ static int __init s5pv210_cpufreq_driver_init(struct cpufreq_policy *policy)
 	previous_arm_volt = dvs_conf[level].arm_volt;
 
 	cpufreq_frequency_table_cpuinfo(policy, freq_table);
-	/* set default min and max policies to non safe speeds */
+	/* set default min and max policies to safe speeds */
 	policy->max = 1000000;
 	policy->min = 100000;
 	return 0;
