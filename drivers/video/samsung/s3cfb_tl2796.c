@@ -319,13 +319,12 @@ static ssize_t gamma_table_show(struct device *dev, struct device_attribute *att
 	for(point = 0; point < lcd_->data->gamma_table_size; point++)
 	{
 		for(color = 0; color < 3; color++)
-		{
-			sprintf(buf,"%s%u", buf, lcd_->data->gamma_table[point].v[color] );
-			if (color != 2)
-				sprintf(buf,"%s,", buf);
-		}
+			if (color == 2)
+				sprintf(buf,"%s%u", buf, lcd_->data->gamma_table[point].v[color] );
+			else
+				sprintf(buf,"%s%u,", buf, lcd_->data->gamma_table[point].v[color] );
 
-		sprintf(buf,"%s\n", buf);
+		sprintf(buf,"%s\n", buf );
 	}
 
 	return sprintf(buf, "%s", buf);
