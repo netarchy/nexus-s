@@ -344,7 +344,7 @@ struct s5p_panel_data herring_panel_data = {
 		.mult = {
 			2318372099U,
 			2117262806U,
-			1729744557U,
+			2345750000U,
 		},
 		.rshift = 31,
 	},
