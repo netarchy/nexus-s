@@ -46,12 +46,7 @@ static void swsusp_unset_page_forbidden(struct page *);
  * size will not exceed N bytes, but if that is impossible, it will
  * try to create the smallest image possible.
  */
-unsigned long image_size;
-
-void __init hibernate_image_size_init(void)
-{
-	image_size = ((totalram_pages * 2) / 5) * PAGE_SIZE;
-}
+unsigned long image_size = 500 * 1024 * 1024;
 
 /* List of PBEs needed for restoring the pages that were allocated before
  * the suspend and included in the suspend image, but have also been
@@ -1323,14 +1318,12 @@ int hibernate_preallocate_memory(void)
 
 	/* Compute the maximum number of saveable pages to leave in memory. */
 	max_size = (count - (size + PAGES_FOR_IO)) / 2 - 2 * SPARE_PAGES;
-	/* Compute the desired number of image pages specified by image_size. */
 	size = DIV_ROUND_UP(image_size, PAGE_SIZE);
 	if (size > max_size)
 		size = max_size;
 	/*
-	 * If the desired number of image pages is at least as large as the
-	 * current number of saveable pages in memory, allocate page frames for
-	 * the image and we're done.
+	 * If the maximum is not less than the current number of saveable pages
+	 * in memory, allocate page frames for the image and we're done.
 	 */
 	if (size >= saveable) {
 		pages = preallocate_image_highmem(save_highmem);
@@ -1519,8 +1512,11 @@ static int
 swsusp_alloc(struct memory_bitmap *orig_bm, struct memory_bitmap *copy_bm,
 		unsigned int nr_pages, unsigned int nr_highmem)
 {
+	int error = 0;
+
 	if (nr_highmem > 0) {
-		if (get_highmem_buffer(PG_ANY))
+		error = get_highmem_buffer(PG_ANY);
+		if (error)
 			goto err_out;
 		if (nr_highmem > alloc_highmem) {
 			nr_highmem -= alloc_highmem;
@@ -1543,7 +1539,7 @@ swsusp_alloc(struct memory_bitmap *orig_bm, struct memory_bitmap *copy_bm,
 
  err_out:
 	swsusp_free();
-	return -ENOMEM;
+	return error;
 }
 
 asmlinkage int swsusp_save(void)

@@ -626,9 +626,15 @@ static int prism2_config(struct pcmcia_device *link)
 	local->hw_priv = hw_priv;
 	hw_priv->link = link;
 
+	/*
+	 * Make sure the IRQ handler cannot proceed until at least
+	 * dev->base_addr is initialized.
+	 */
+	spin_lock_irqsave(&local->irq_init_lock, flags);
+
 	ret = pcmcia_request_irq(link, prism2_interrupt);
 	if (ret)
-		goto failed;
+		goto failed_unlock;
 
 	/*
 	 * This actually configures the PCMCIA socket -- setting up
@@ -637,12 +643,11 @@ static int prism2_config(struct pcmcia_device *link)
 	 */
 	ret = pcmcia_request_configuration(link, &link->conf);
 	if (ret)
-		goto failed;
+		goto failed_unlock;
 
-	/* IRQ handler cannot proceed until at dev->base_addr is initialized */
-	spin_lock_irqsave(&local->irq_init_lock, flags);
 	dev->irq = link->irq;
 	dev->base_addr = link->io.BasePort1;
+
 	spin_unlock_irqrestore(&local->irq_init_lock, flags);
 
 	/* Finally, report what we've done */
@@ -671,6 +676,8 @@ static int prism2_config(struct pcmcia_device *link)
 
 	return ret;
 
+ failed_unlock:
+	 spin_unlock_irqrestore(&local->irq_init_lock, flags);
  failed:
 	kfree(hw_priv);
 	prism2_release((u_long)link);

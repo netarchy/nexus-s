@@ -91,7 +91,6 @@ static struct user_struct *uid_hash_find(uid_t uid, struct hlist_head *hashent)
  * upon function exit.
  */
 static void free_user(struct user_struct *up, unsigned long flags)
-	__releases(&uidhash_lock)
 {
 	uid_hash_remove(up);
 	spin_unlock_irqrestore(&uidhash_lock, flags);

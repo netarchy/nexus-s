@@ -23,13 +23,15 @@
 #include "vhci.h"
 
 
-/* get URB from transmitted urb queue. caller must hold vdev->priv_lock */
-struct urb *pickup_urb_and_free_priv(struct vhci_device *vdev,
+/* get URB from transmitted urb queue */
+static struct urb *pickup_urb_and_free_priv(struct vhci_device *vdev,
 					    __u32 seqnum)
 {
 	struct vhci_priv *priv, *tmp;
 	struct urb *urb = NULL;
 	int status;
+
+	spin_lock(&vdev->priv_lock);
 
 	list_for_each_entry_safe(priv, tmp, &vdev->priv_rx, list) {
 		if (priv->seqnum == seqnum) {
@@ -61,6 +63,8 @@ struct urb *pickup_urb_and_free_priv(struct vhci_device *vdev,
 		}
 	}
 
+	spin_unlock(&vdev->priv_lock);
+
 	return urb;
 }
 
@@ -70,11 +74,9 @@ static void vhci_recv_ret_submit(struct vhci_device *vdev,
 	struct usbip_device *ud = &vdev->ud;
 	struct urb *urb;
 
-	spin_lock(&vdev->priv_lock);
 
 	urb = pickup_urb_and_free_priv(vdev, pdu->base.seqnum);
 
-	spin_unlock(&vdev->priv_lock);
 
 	if (!urb) {
 		usbip_uerr("cannot find a urb of seqnum %u\n",
@@ -159,12 +161,7 @@ static void vhci_recv_ret_unlink(struct vhci_device *vdev,
 		return;
 	}
 
-	spin_lock(&vdev->priv_lock);
-
 	urb = pickup_urb_and_free_priv(vdev, unlink->unlink_seqnum);
-
-	spin_unlock(&vdev->priv_lock);
-
 	if (!urb) {
 		/*
 		 * I get the result of a unlink request. But, it seems that I

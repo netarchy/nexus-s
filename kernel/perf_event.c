@@ -58,8 +58,7 @@ static atomic_t nr_task_events __read_mostly;
  */
 int sysctl_perf_event_paranoid __read_mostly = 1;
 
-/* Minimum for 128 pages + 1 for the user control page */
-int sysctl_perf_event_mlock __read_mostly = 516; /* 'free' kb per user */
+int sysctl_perf_event_mlock __read_mostly = 512; /* 'free' kb per user */
 
 /*
  * max perf event sample rate
@@ -5401,20 +5400,17 @@ __perf_event_exit_task(struct perf_event *child_event,
 			 struct perf_event_context *child_ctx,
 			 struct task_struct *child)
 {
-	if (child_event->parent) {
-		raw_spin_lock_irq(&child_ctx->lock);
-		perf_group_detach(child_event);
-		raw_spin_unlock_irq(&child_ctx->lock);
-	}
+	struct perf_event *parent_event;
 
 	perf_event_remove_from_context(child_event);
 
+	parent_event = child_event->parent;
 	/*
-	 * It can happen that the parent exits first, and has events
+	 * It can happen that parent exits first, and has events
 	 * that are still around due to the child reference. These
-	 * events need to be zapped.
+	 * events need to be zapped - but otherwise linger.
 	 */
-	if (child_event->parent) {
+	if (parent_event) {
 		sync_child_event(child_event, child);
 		free_event(child_event);
 	}

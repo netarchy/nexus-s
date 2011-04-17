@@ -460,8 +460,7 @@ kbd_ioctl(struct kbd_data *kbd, struct file *file,
 	  unsigned int cmd, unsigned long arg)
 {
 	void __user *argp;
-	unsigned int ct;
-	int perm;
+	int ct, perm;
 
 	argp = (void __user *)arg;
 

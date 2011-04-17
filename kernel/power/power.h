@@ -14,9 +14,6 @@ struct swsusp_info {
 } __attribute__((aligned(PAGE_SIZE)));
 
 #ifdef CONFIG_HIBERNATION
-/* kernel/power/snapshot.c */
-extern void __init hibernate_image_size_init(void);
-
 #ifdef CONFIG_ARCH_HIBERNATION_HEADER
 /* Maximum size of architecture specific data in a hibernation header */
 #define MAX_ARCH_HEADER_SIZE	(sizeof(struct new_utsname) + 4)
@@ -52,11 +49,7 @@ static inline char *check_image_kernel(struct swsusp_info *info)
 extern int hibernation_snapshot(int platform_mode);
 extern int hibernation_restore(int platform_mode);
 extern int hibernation_platform_enter(void);
-
-#else /* !CONFIG_HIBERNATION */
-
-static inline void hibernate_image_size_init(void) {}
-#endif /* !CONFIG_HIBERNATION */
+#endif
 
 extern int pfn_is_nosave(unsigned long);
 
