@@ -424,7 +424,7 @@ static struct s5pv210_cpufreq_voltage smdkc110_cpufreq_volt[] = {
 		.vint	= 1150000,
 	}, {
 		.freq	= 1000000,
-		.varm	= 1275000,
+		.varm	= 1250000,
 		.vint	= 1100000,
 	}, {
 		.freq	=  800000,
@@ -719,7 +719,7 @@ static struct regulator_init_data herring_buck2_data = {
 		.valid_ops_mask	= REGULATOR_CHANGE_VOLTAGE |
 				  REGULATOR_CHANGE_STATUS,
 		.state_mem	= {
-			.uV	= 1150000,
+			.uV	= 1250000,
 			.mode	= REGULATOR_MODE_NORMAL,
 			.disabled = 1,
 		},
