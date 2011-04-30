@@ -74,6 +74,7 @@ static void enable_led_notification(void)
 	if (bln_enabled) {
 		enable_touchkey_backlights();
 		pr_info("%s: notification led enabled\n", __FUNCTION__);
+		BacklightNotification_ongoing = true;
 	}
 }
 
