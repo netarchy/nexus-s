@@ -147,10 +147,10 @@ static ssize_t blink_control_write(struct device *dev,
 	if (sscanf(buf, "%u\n", &data) == 1) {
 		if (data == 1) {
 			bln_blink_state = 1;
-			bln_enable_backlights();
+			bln_disable_backlights();
 		} else if (data == 0) {
 			bln_blink_state = 0;
-			bln_disable_backlights();
+			bln_enable_backlights();
 		} else {
 			pr_info("%s: wrong input %u\n", __FUNCTION__, data);
 		}
