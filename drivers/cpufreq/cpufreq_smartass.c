@@ -70,7 +70,7 @@ static unsigned long ramp_down_rate_ns;
  * When ramping up frequency jump to at least this frequency.
  */
 
-#define DEFAULT_UP_MIN_FREQ (100*1000)
+#define DEFAULT_UP_MIN_FREQ (800*1000)
 static unsigned int up_min_freq;
 
 /*
@@ -79,7 +79,7 @@ static unsigned int up_min_freq;
  * to minimize wakeup issues.
  * Set sleep_max_freq=0 to disable this behavior.
  */
-#define DEFAULT_SLEEP_MAX_FREQ (100*100)
+#define DEFAULT_SLEEP_MAX_FREQ (100*1000)
 static unsigned int sleep_max_freq;
 
 /*
@@ -98,7 +98,7 @@ static unsigned int max_ramp_up;
 /*
  * CPU freq will be increased if measured load > max_cpu_load;
  */
-#define DEFAULT_MAX_CPU_LOAD 85
+#define DEFAULT_MAX_CPU_LOAD 75
 static unsigned long max_cpu_load;
 
 /*
