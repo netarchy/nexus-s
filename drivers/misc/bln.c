@@ -16,6 +16,7 @@
 #include <linux/bln.h>
 #include <linux/mutex.h>
 #include <linux/timer.h>
+#include <linux/wakelock.h>
 
 static bool bln_enabled = true; /* is BLN function is enabled */
 static bool bln_ongoing = false; /* ongoing LED Notification */
@@ -24,6 +25,8 @@ static bool bln_suspended = false; /* is system suspended */
 static struct bln_implementation *bln_imp = NULL;
 static bool in_kernel_blink = false;
 static uint32_t blink_count;
+
+static struct wake_lock bln_wake_lock;
 
 void bl_timer_callback(unsigned long data);
 static struct timer_list blink_timer =
@@ -69,6 +72,8 @@ static void enable_led_notification(void)
 		return;
 
 	if (in_kernel_blink) {
+		wake_lock(&bln_wake_lock);
+
 		/* Start timer */
 		blink_timer.expires = jiffies +
 				msecs_to_jiffies(BLINK_INTERVAL);
@@ -93,6 +98,8 @@ static void disable_led_notification(void)
 
 	if (in_kernel_blink)
 		del_timer(&blink_timer);
+
+	wake_unlock(&bln_wake_lock);
 
 }
 
@@ -257,6 +264,7 @@ static void blink_callback(struct work_struct *blink_work)
 		pr_info("%s: notification timed out\n", __FUNCTION__);
 		bln_enable_backlights();
 		del_timer(&blink_timer);
+		wake_unlock(&bln_wake_lock);
 		return;
 	}
 
@@ -295,6 +303,9 @@ static int __init bln_control_init(void)
 	}
 
 	register_early_suspend(&bln_suspend_data);
+
+    /* Initialize wake locks */
+	wake_lock_init(&bln_wake_lock, WAKE_LOCK_SUSPEND, "bln_wake");
 
 	return 0;
 }
