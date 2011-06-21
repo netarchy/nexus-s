@@ -58,13 +58,13 @@ static cpumask_t down_cpumask;
 static spinlock_t down_cpumask_lock;
 
 /* Go to max speed when CPU load at or above this value. */
-#define DEFAULT_GO_MAXSPEED_LOAD 85
+#define DEFAULT_GO_MAXSPEED_LOAD 95
 static unsigned long go_maxspeed_load;
 
 /*
  * The minimum amount of time to spend at a frequency before we can ramp down.
  */
-#define DEFAULT_MIN_SAMPLE_TIME 80000;
+#define DEFAULT_MIN_SAMPLE_TIME 40000;
 static unsigned long min_sample_time;
 
 #define DEBUG 0
