@@ -66,6 +66,8 @@ struct mxt224_data {
 	u8 objects_len;
 	u8 tsp_version;
 	const u8 *power_cfg;
+	u8 *touch_cfg; /* T9 */
+	u8 *noise_cfg; /* T22 */
 	u8 finger_type;
 	u16 msg_proc;
 	u16 cmd_proc;
@@ -431,6 +433,140 @@ static int mxt224_internal_resume(struct mxt224_data *data)
 	return ret;
 }
 
+
+
+#define TOUCH_TOUCHTHR_OFFSET 7
+#define NOISE_NOISETHR_OFFSET 8
+
+static ssize_t touchthr_read(struct device *dev, struct device_attribute *attr, char *buf)
+{
+	struct i2c_client *client = to_i2c_client(dev);
+	struct mxt224_data *data = i2c_get_clientdata(client);
+	return sprintf(buf, "%u\n", data->touch_cfg[TOUCH_TOUCHTHR_OFFSET]);
+}
+
+static ssize_t touchthr_write(struct device *dev, struct device_attribute *attr, const char *buf, size_t size)
+{
+	struct i2c_client *client = to_i2c_client(dev);
+	struct mxt224_data *data = i2c_get_clientdata(client);
+	unsigned int tmp;
+
+	if (sscanf(buf, "%u\n", &tmp) == 1) {
+		u8 value = (u8) tmp;
+		if (value > 5 && value < 45) {
+			int ret;
+			u8 orig;
+
+			printk(KERN_INFO "touchscreen: touchthr = %d\n", value);
+			orig = data->touch_cfg[TOUCH_TOUCHTHR_OFFSET];
+			data->touch_cfg[TOUCH_TOUCHTHR_OFFSET] = value;
+
+			ret = write_config(data, TOUCH_MULTITOUCHSCREEN_T9, data->touch_cfg);
+			if (ret) {
+				printk(KERN_WARNING "touchscreen: touchthr configuration fail\n");
+				data->touch_cfg[TOUCH_TOUCHTHR_OFFSET] = orig;
+				/*ret = write_config(data, PROCG_NOISESUPPRESSION_T22, data->touch_cfg);
+				if (!ret)
+					printk(KERN_WARNING "touchscreen: touchthr set back to %d\n", orig);*/
+			}
+			msleep(60);
+		} else {
+			printk(KERN_WARNING "touchscreen: touchthr off range %d\n", value);
+		}
+	} else {
+		printk(KERN_WARNING "touchscreen: touchthr ignored\n");
+	}
+
+	return size;
+}
+
+static ssize_t noisethr_read(struct device *dev, struct device_attribute *attr, char *buf)
+{
+	struct i2c_client *client = to_i2c_client(dev);
+	struct mxt224_data *data = i2c_get_clientdata(client);
+	return sprintf(buf, "%u\n", data->noise_cfg[NOISE_NOISETHR_OFFSET]);
+}
+
+static ssize_t noisethr_write(struct device *dev, struct device_attribute *attr, const char *buf, size_t size)
+{
+	struct i2c_client *client = to_i2c_client(dev);
+	struct mxt224_data *data = i2c_get_clientdata(client);
+	unsigned int tmp;
+
+	if (sscanf(buf, "%u\n", &tmp) == 1) {
+		u8 value = (u8) tmp;
+		if (value > 15 && value < 45) {
+			int ret;
+			u8 orig;
+
+			printk(KERN_INFO "touchscreen: noisethr = %d\n", value);
+			orig = data->noise_cfg[NOISE_NOISETHR_OFFSET];
+			data->noise_cfg[NOISE_NOISETHR_OFFSET] = value;
+
+			ret = write_config(data, PROCG_NOISESUPPRESSION_T22, data->touch_cfg);
+			if (ret) {
+				printk(KERN_WARNING "touchscreen: noisethr configuration fail\n");
+				data->noise_cfg[NOISE_NOISETHR_OFFSET] = orig;
+				/*ret = write_config(data, PROCG_NOISESUPPRESSION_T22, data->touch_cfg);
+				if (!ret)
+					printk(KERN_WARNING "touchscreen: noisethr set back to %d\n", orig);*/
+			}
+			msleep(60);
+		} else {
+			printk(KERN_WARNING "touchscreen: noisethr off range %d\n", value);
+		}
+	} else {
+		printk(KERN_WARNING "touchscreen: noisethr ignored\n");
+	}
+
+	return size;
+}
+
+static ssize_t reset_read(struct device *dev, struct device_attribute *attr, char *buf)
+{
+	return 0;
+}
+
+static ssize_t reset_write(struct device *dev, struct device_attribute *attr, const char *buf, size_t size)
+{
+	struct i2c_client *client = to_i2c_client(dev);
+	struct mxt224_data *data = i2c_get_clientdata(client);
+	unsigned int tmp;
+
+	if (sscanf(buf, "%u\n", &tmp) != 0) {
+
+		int i;
+		mxt224_backup(data);
+		mxt224_reset(data);
+		msleep(60);
+		for (i = 0; i < data->num_fingers; i++)
+			data->fingers[i].z = -1;
+		printk(KERN_DEBUG "touchscreen: reseted\n");
+
+	} else {
+		printk(KERN_WARNING "touchscreen: reset ignored\n");
+	}
+
+	return size;
+}
+
+static DEVICE_ATTR(touchthr, S_IRUGO | S_IWUGO, touchthr_read, touchthr_write);
+static DEVICE_ATTR(noisethr, S_IRUGO | S_IWUGO, noisethr_read, noisethr_write);
+static DEVICE_ATTR(reset, S_IRUGO | S_IWUGO, reset_read, reset_write);
+
+static struct attribute *touchscreen_config_attributes[] = {
+	&dev_attr_touchthr.attr,
+	&dev_attr_noisethr.attr,
+	&dev_attr_reset.attr,
+	NULL
+};
+
+static struct attribute_group touchscreen_config_group = {
+    .attrs  = touchscreen_config_attributes,
+};
+
+
+
 #ifdef CONFIG_HAS_EARLYSUSPEND
 #define mxt224_suspend	NULL
 #define mxt224_resume	NULL
@@ -548,6 +684,12 @@ static int __devinit mxt224_probe(struct i2c_client *client,
 		if (pdata->config[i][0] == GEN_POWERCONFIG_T7)
 			data->power_cfg = pdata->config[i] + 1;
 
+		if (pdata->config[i][0] == TOUCH_MULTITOUCHSCREEN_T9)
+			data->touch_cfg = (u8*)pdata->config[i] + 1;
+
+		if (pdata->config[i][0] == PROCG_NOISESUPPRESSION_T22)
+			data->noise_cfg = (u8*)pdata->config[i] + 1;
+
 		if (pdata->config[i][0] == TOUCH_MULTITOUCHSCREEN_T9) {
 			/* Are x and y inverted? */
 			if (pdata->config[i][10] & 0x1) {
@@ -583,6 +725,10 @@ static int __devinit mxt224_probe(struct i2c_client *client,
 	if (ret < 0)
 		goto err_irq;
 
+	ret = sysfs_create_group(&client->dev.kobj, &touchscreen_config_group);
+	if (ret)
+		goto err_sysfs;
+
 #ifdef CONFIG_HAS_EARLYSUSPEND
 	data->early_suspend.level = EARLY_SUSPEND_LEVEL_BLANK_SCREEN + 1;
 	data->early_suspend.suspend = mxt224_early_suspend;
@@ -592,6 +738,8 @@ static int __devinit mxt224_probe(struct i2c_client *client,
 
 	return 0;
 
+err_sysfs:
+	sysfs_remove_group(&client->dev.kobj, &touchscreen_config_group);
 err_irq:
 err_reset:
 err_backup:
@@ -615,6 +763,7 @@ static int __devexit mxt224_remove(struct i2c_client *client)
 #ifdef CONFIG_HAS_EARLYSUSPEND
 	unregister_early_suspend(&data->early_suspend);
 #endif
+	sysfs_remove_group(&client->dev.kobj, &touchscreen_config_group);
 	free_irq(client->irq, data);
 	kfree(data->objects);
 	gpio_free(data->gpio_read_done);
