@@ -6,6 +6,7 @@
 struct bln_implementation {
 	void (*enable)(void);
 	void (*disable)(void);
+        void (*dim)(void);
 };
 
 void register_bln_implementation(struct bln_implementation *imp);

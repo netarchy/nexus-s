@@ -34,6 +34,13 @@ static struct timer_list blink_timer =
 static void blink_callback(struct work_struct *blink_work);
 static DECLARE_WORK(blink_work, blink_callback);
 
+static unsigned int dimmer_interval = 0;
+
+void dimmer_timer_callback(unsigned long data);
+static struct timer_list dimmer_timer = TIMER_INITIALIZER(dimmer_timer_callback, 0, 0);
+static void dimmer_callback(struct work_struct *dimmer_work);
+static DECLARE_WORK(dimmer_work, dimmer_callback);
+
 #define BLINK_INTERVAL 500 /* on / off every 500ms */
 #define MAX_BLINK_COUNT 600 /* 10 minutes */
 #define BACKLIGHTNOTIFICATION_VERSION 9
@@ -177,6 +184,53 @@ static ssize_t in_kernel_blink_status_write(struct device *dev,
 
 	return size;
 }
+
+static ssize_t in_kernel_dimmer_status_read(struct device *dev, struct device_attribute *attr, char *buf)
+{
+    return sprintf(buf,"%u\n", dimmer_interval);
+}
+
+static ssize_t in_kernel_dimmer_status_write(struct device *dev, struct device_attribute *attr, const char *buf, size_t size)
+{
+    unsigned int data;
+
+    if (sscanf(buf, "%u\n", &data) == 1)
+	{
+	    if (dimmer_interval > 0)
+		{
+		    if (data == 0)
+			{
+			    del_timer(&dimmer_timer);
+
+			    dimmer_interval = data;
+			}
+		    else
+			{
+			    dimmer_interval = data;
+			    
+			    mod_timer(&dimmer_timer, jiffies + msecs_to_jiffies(dimmer_interval));
+			}
+		}
+	    else
+		{
+		    if (data > 0)
+			{
+			    dimmer_interval = data;
+
+			    dimmer_timer.expires = jiffies + msecs_to_jiffies(dimmer_interval);
+		
+			    add_timer(&dimmer_timer);
+			}
+		}
+	}
+    else
+	{
+	    pr_info("%s: input error\n", __FUNCTION__);
+	}
+
+    return size;
+}
+
 static ssize_t blink_control_read(struct device *dev,
 		struct device_attribute *attr, char *buf)
 {
@@ -225,6 +279,9 @@ static DEVICE_ATTR(notification_led, S_IRUGO | S_IWUGO,
 static DEVICE_ATTR(in_kernel_blink, S_IRUGO | S_IWUGO,
 		in_kernel_blink_status_read,
 		in_kernel_blink_status_write);
+static DEVICE_ATTR(in_kernel_dimmer, S_IRUGO | S_IWUGO,
+		in_kernel_dimmer_status_read,
+		in_kernel_dimmer_status_write);
 static DEVICE_ATTR(version, S_IRUGO , backlightnotification_version, NULL);
 
 static struct attribute *bln_notification_attributes[] = {
@@ -232,6 +289,7 @@ static struct attribute *bln_notification_attributes[] = {
 	&dev_attr_enabled.attr,
 	&dev_attr_notification_led.attr,
 	&dev_attr_in_kernel_blink.attr,
+	&dev_attr_in_kernel_dimmer.attr,
 	&dev_attr_version.attr,
 	NULL
 };
@@ -280,6 +338,27 @@ void bl_timer_callback(unsigned long data)
 {
 	schedule_work(&blink_work);
 	mod_timer(&blink_timer, jiffies + msecs_to_jiffies(BLINK_INTERVAL));
+}
+
+static void dimmer_callback(struct work_struct *dimmer_work)
+{
+    if (!bln_suspended || !bln_ongoing)
+	{
+	    if (bln_imp)
+		{
+		    bln_imp->dim();
+		}
+	}
+
+    return;
+}
+
+void dimmer_timer_callback(unsigned long data)
+{
+    schedule_work(&dimmer_work);
+    mod_timer(&dimmer_timer, jiffies + msecs_to_jiffies(dimmer_interval));
+
+    return;
 }
 
 static int __init bln_control_init(void)

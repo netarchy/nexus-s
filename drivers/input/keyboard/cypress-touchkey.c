@@ -396,6 +396,7 @@ static void cypress_touchkey_disable_led_notification(void){
 static struct bln_implementation cypress_touchkey_bln = {
 	.enable = cypress_touchkey_enable_led_notification,
 	.disable = cypress_touchkey_disable_led_notification,
+	.dim = disable_touchkey_backlights,
 };
 
 static int cypress_touchkey_probe(struct i2c_client *client,

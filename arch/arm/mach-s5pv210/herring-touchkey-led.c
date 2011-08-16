@@ -45,6 +45,7 @@ static void herring_touchkey_bln_disable(void)
 static struct bln_implementation herring_touchkey_bln = {
 	.enable = herring_touchkey_bln_enable,
 	.disable = herring_touchkey_bln_disable,
+	.dim = herring_touchkey_bln_disable,
 };
 #endif
 
