@@ -19,6 +19,10 @@
 #include <linux/types.h>
 #endif
 
+#ifdef CONFIG_BLD
+#include <linux/bld.h>
+#endif
+
 /*
  * The event structure itself
  */
@@ -1373,7 +1377,17 @@ void input_inject_event(struct input_handle *handle, unsigned int type, unsigned
 
 static inline void input_report_key(struct input_dev *dev, unsigned int code, int value)
 {
-	input_event(dev, EV_KEY, code, !!value);
+#ifdef CONFIG_BLD
+    if (code == KEY_MENU || code == KEY_HOME || code == KEY_BACK || code == KEY_SEARCH)
+	{
+	    if (value == 1)
+		{
+		    touchkey_pressed();
+		}
+	}
+#endif
+
+    input_event(dev, EV_KEY, code, !!value);
 }
 
 static inline void input_report_rel(struct input_dev *dev, unsigned int code, int value)
