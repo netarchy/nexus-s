@@ -347,8 +347,8 @@ CHECK		= sparse
 
 CHECKFLAGS     := -D__linux__ -Dlinux -D__STDC__ -Dunix -D__unix__ \
 		  -Wbitwise -Wno-return-void $(CF)
-CFLAGS_MODULE   =
-AFLAGS_MODULE   =
+CFLAGS_MODULE   = -DMODULE -funswitch-loops -fpredictive-commoning -fipa-cp-clone -fsingle-precision-constant -pipe
+AFLAGS_MODULE   = -DMODULE -funswitch-loops -fpredictive-commoning -fipa-cp-clone -fsingle-precision-constant -pipe
 LDFLAGS_MODULE  =
 CFLAGS_KERNEL	= -funswitch-loops -fpredictive-commoning -fipa-cp-clone -fsingle-precision-constant -pipe 
 AFLAGS_KERNEL	=
@@ -377,8 +377,8 @@ KBUILD_CFLAGS   := -Wall -Wundef -Wstrict-prototypes -Wno-trigraphs \
 KBUILD_AFLAGS_KERNEL :=
 KBUILD_CFLAGS_KERNEL :=
 KBUILD_AFLAGS   := -D__ASSEMBLY__
-KBUILD_AFLAGS_MODULE  := -DMODULE -funswitch-loops -fpredictive-commoning -fipa-cp-clone -fsingle-precision-constant -pipe
-KBUILD_CFLAGS_MODULE  := -DMODULE -funswitch-loops -fpredictive-commoning -fipa-cp-clone -fsingle-precision-constant -pipe
+KBUILD_AFLAGS_MODULE  := -DMODULE
+KBUILD_CFLAGS_MODULE  := -DMODULE
 KBUILD_LDFLAGS_MODULE := -T $(srctree)/scripts/module-common.lds
 
 # Read KERNELRELEASE from include/config/kernel.release (if it exists)
