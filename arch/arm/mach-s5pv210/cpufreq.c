@@ -32,6 +32,9 @@ static struct clk *dmc1_clk;
 static struct cpufreq_freqs freqs;
 static DEFINE_MUTEX(set_freq_lock);
 
+/* UV */
+extern int exp_UV_mV[7];
+
 /* APLL values for overclocking frequencies */
 #define APLL_VAL_1400	((1<<31)|(175<<16)|(3<<8)|(1))
 #define APLL_VAL_1300	((1<<31)|(325<<16)|(6<<8)|(0))
@@ -261,7 +264,7 @@ static int s5pv210_target(struct cpufreq_policy *policy,
 	if (freqs.new == freqs.old)
 		goto out;
 
-	arm_volt = dvs_conf[index].arm_volt;
+	arm_volt = exp_UV_mV[index]; //dvs_conf[index].arm_volt;
 	int_volt = dvs_conf[index].int_volt;
 
 	if (freqs.new > freqs.old) {
