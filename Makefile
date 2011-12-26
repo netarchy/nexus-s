@@ -371,8 +371,9 @@ KBUILD_CFLAGS   := -Wall -Wundef -Wstrict-prototypes -Wno-trigraphs \
 		   -fno-delete-null-pointer-checks \
 		   -mfpu=neon \
 		   -march=armv5te \
-		   -mtune=cortex-a8 \
-		   -mno-unaligned-access
+		   -mtune=cortex-a8 
+# For codesourcery 4.5.2 use
+#		   -mno-unaligned-access
 
 KBUILD_AFLAGS_KERNEL :=
 KBUILD_CFLAGS_KERNEL :=
