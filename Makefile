@@ -374,6 +374,7 @@ KBUILD_CFLAGS   := -Wall -Wundef -Wstrict-prototypes -Wno-trigraphs \
 		   -mtune=cortex-a8 
 # For codesourcery 4.5.2 use
 #		   -mno-unaligned-access
+# for homemade toolchain, -fno-dwarf2-cfi-asm  
 
 KBUILD_AFLAGS_KERNEL :=
 KBUILD_CFLAGS_KERNEL :=
