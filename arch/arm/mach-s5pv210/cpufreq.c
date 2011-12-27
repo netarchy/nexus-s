@@ -102,7 +102,7 @@ struct s5pv210_dvs_conf {
 };
 
 #ifdef CONFIG_CUSTOM_VOLTAGE
-unsigned long arm_volt_max = 1350000;
+unsigned long arm_volt_max = 1600000;
 unsigned long int_volt_max = 1250000;
 #else
 const unsigned long arm_volt_max = 1600000;
